@@ -1,9 +1,21 @@
-import glib
-import pygst
-pygst.require("0.10")
-import gst
+import sys
+import signal
 from getpass import getpass
 from gmusicapi.api import Api
+
+try:
+    from PyQt4.QtGui import QApplication
+    from PyQt4.phonon import Phonon
+    PLAYER = "phonon"
+except ImportError:
+    try:
+        import glib
+        import pygst
+        pygst.require("0.10")
+        import gst
+        PLAYER = "gst"
+    except ImportError:
+        PLAYER = None
 
 
 def init():
@@ -23,10 +35,26 @@ def init():
 
 
 def play(url):
-    player = gst.element_factory_make("playbin2", "player")
-    player.set_property("uri", url)
-    player.set_state(gst.STATE_PLAYING)
-    glib.MainLoop().run()
+    if PLAYER == "phonon":
+        app = QApplication(sys.argv)
+        app.setApplicationName("Google Music playing test")
+        output = Phonon.AudioOutput(Phonon.MusicCategory)
+        media = Phonon.MediaObject()
+        Phonon.createPath(media, output)
+        media.setCurrentSource(Phonon.MediaSource(url))
+        media.play()
+        # Trick to allow Ctrl+C to exit.
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        sys.exit(app.exec_())
+
+    elif PLAYER == "gst":
+        player = gst.element_factory_make("playbin2", "player")
+        player.set_property("uri", url)
+        player.set_state(gst.STATE_PLAYING)
+        glib.MainLoop().run()
+    else:
+        print "Cannot play the media :("
+        return
 
 
 def main():
