@@ -51,7 +51,8 @@ def play(url):
         player.set_state(gst.STATE_PLAYING)
         glib.MainLoop().run()
     else:
-        print "Cannot play the media :("
+        import subprocess
+        subprocess.call(["ffplay", "-vn", "-nodisp", "%s" % url])
         return
 
 
