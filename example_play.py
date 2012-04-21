@@ -66,9 +66,7 @@ def main():
 
     query = raw_input("Search Query: ")
     response = api.search(query)
-    search_results = response["results"]
-
-    songs = search_results["songs"]
+    songs = response["song_hits"]
     if not len(songs):
         print "Nothing found :("
         return
