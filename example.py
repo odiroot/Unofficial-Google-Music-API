@@ -1,21 +1,29 @@
-#!/user/bin/env python
+#!/usr/bin/env python
 
-#Copyright 2012 Simon Weber.
+# Copyright (c) 2012, Simon Weber
+# All rights reserved.
 
-#This file is part of gmusicapi - the Unofficial Google Music API.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of the copyright holder nor the
+#       names of the contributors may be used to endorse or promote products
+#       derived from this software without specific prior written permission.
 
-#Gmusicapi is free software: you can redistribute it and/or modify
-#it under the terms of the GNU General Public License as published by
-#the Free Software Foundation, either version 3 of the License, or
-#(at your option) any later version.
-
-#Gmusicapi is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-
-#You should have received a copy of the GNU General Public License
-#along with gmusicapi.  If not, see <http://www.gnu.org/licenses/>.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 from gmusicapi.api import Api
@@ -25,8 +33,8 @@ def init():
     """Makes an instance of the api and attempts to login with it.
     Returns the authenticated api.
     """
-
-    api = Api()
+    
+    api = Api() 
     
     logged_in = False
     attempts = 0
@@ -41,60 +49,65 @@ def init():
     return api
 
 def main():
-    """Demonstrates some api features.
-    Logs in, gets library, searches for a song, selects the first result, 
-    then creates a new playlist and adds that song to it.
-    Finally, it renames and deletes the playlist.
-    """
+    """Demonstrates some api features."""
 
+    #Make a new instance of the api and prompt the user to log in.
     api = init()
 
+    if not api.is_authenticated():
+        print "Sorry, those credentials weren't accepted."
+        return
+
+    print "Successfully logged in."
+    print
+
+    #Get all of the users songs.
+    #library is a big list of dictionaries, each of which contains a single song.
     print "Loading library...",
     library = api.get_all_songs()
-    print "done"
+    print "done."
 
     print len(library), "tracks detected."
     print
-    
-    query = raw_input("Search Query: ")
-    search_results = api.search(query)
-        
-    #Note that this only looks at hits on songs.
-    #Songs matched on artist/album hits are discarded by selecting ['songs'].
-    songs = search_results['results']['songs']
-    if len(songs) == 0:
-        print "No songs from that search."
-        return
 
-    song = songs[0]
-    print "Selected", song['title'],"by",song['artist']
-    song_id = song['id']
+    #Show some info about a song. There is no guaranteed order;
+    # this is essentially a random song.
+    first_song = library[0]
+    print "The first song I see is '{}' by '{}'.".format(
+        first_song["name"],
+        first_song["artist"])
 
 
-    playlist_name = raw_input("New playlist name: ")
-    res = api.create_playlist(playlist_name)
+    #We're going to create a new playlist and add a song to it.
+    #Songs are uniquely identified by 'song ids', so let's get the id:
+    song_id = first_song["id"]
 
-    if not res['success']:
-        print "Failed to make the playlist."
-        return
+    print "I'm going to make a new playlist and add that song to it."
+    print "Don't worry, I'll delete it when we're finished."
+    print
+    playlist_name = raw_input("Enter a name for the playlist: ")
 
-    print "Made new playlist named",res['title']
+    #Like songs, playlists have unique ids.
+    #Note that Google Music allows more than one playlist of the
+    # exact same name, so you'll always have to work with ids.
+    playlist_id = api.create_playlist(playlist_name)
+    print "Made the playlist."
+    print
+
+    #Now lets add the song to the playlist, using their ids:
+    api.add_songs_to_playlist(playlist_id, song_id)
+    print "Added the song to the playlist."
+    print
+
+    #We're all done! The user can now go and see that the playlist is there.
+    raw_input("You can now check on Google Music that the playlist exists. \n When done, press enter to delete the playlist:")
+    api.delete_playlist(playlist_id)
+    print "Deleted the playlist."
 
 
-    playlist_id = res['id']
-    res = api.add_songs_to_playlist(playlist_id, song_id)
-    print "Added to playlist."
-
-    res = api.change_playlist_name(playlist_id, "api playlist")
-    print "Changed playlist name to 'api playlist'."
-
-    raw_input("Press enter to delete the playlist.")
-    res = api.delete_playlist(playlist_id)
-    print "Deleted playlist."
-
-    print "Done!"
-    
+    #It's good practice to logout when finished.
     api.logout()
+    print "All done!"
 
 if __name__ == '__main__':
     main()
