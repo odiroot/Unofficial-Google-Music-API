@@ -37,3 +37,21 @@ Proposed solution: replace with old, expression style::
 
     print foo
 
+
+Missing and icompatible modules
+===============================
+
+JSON
+----
+Proposed alternative: simplejson, replace imports::
+
+    import simplejson as json
+
+Validictory
+-----------
+Uses incompatible syntax.
+Proposed solution: remove dependency, custom schema validation or none at all.
+
+
+
+

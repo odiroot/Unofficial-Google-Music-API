@@ -34,7 +34,10 @@ This api is not supported nor endorsed by Google, and could break at any time.
 """
 from __future__ import with_statement
 
-import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 import time
 import exceptions
 import copy
@@ -44,11 +47,11 @@ import subprocess
 import os
 #used for _wc_call to get its calling parent.
 #according to http://stackoverflow.com/questions/1095543/get-name-of-calling-functions-module-in-python,
-# this 
-#  "will interact strangely with import hooks, 
-#  won't work on ironpython, 
+# this
+#  "will interact strangely with import hooks,
+#  won't work on ironpython,
 #  and may behave in surprising ways on jython"
-import inspect 
+import inspect
 
 try:
     # These are for python3 support
@@ -76,11 +79,11 @@ from gmtools import tools
 from utils.clientlogin import ClientLogin
 from utils.tokenauth import TokenAuth
 
-supported_upload_filetypes = ("mp3", "m4a", "ogg", "flac", "wma") 
+supported_upload_filetypes = ("mp3", "m4a", "ogg", "flac", "wma")
 
 class CallFailure(exceptions.Exception):
     """Exception raised when the Google Music server responds that a call failed.
-    
+
     Attributes:
         name -- name of Api function that had the failing call
         res  -- the body of the failed response
@@ -107,7 +110,7 @@ class Api(UsesLog):
         self.mm_protocol = MM_Protocol()
 
         self.init_logger()
-    
+
     @contextlib.contextmanager
     def _unsuppress_failures(self):
         """An internal context manager to temporarily disable failure suppression.
@@ -187,7 +190,7 @@ class Api(UsesLog):
         The server response is *not* to be trusted. Instead, reload the library; this will always reflect changes.
 
         These metadata keys are able to be changed:
-        
+
         * rating: set to 0 (no thumb), 1 (down thumb), or 5 (up thumb)
         * name: use this instead of `title`
         * album
@@ -203,9 +206,9 @@ class Api(UsesLog):
         * year
 
         These keys cannot be changed:
-        
+
         * comment
-        * id 
+        * id
         * deleted
         * creationDate
         * albumArtUrl
@@ -227,9 +230,9 @@ class Api(UsesLog):
         """
 
         res = self._wc_call("modifyentries", songs)
-        
+
         return [s['id'] for s in res['songs']]
-        
+
     def create_playlist(self, name):
         """Creates a new playlist. Returns the new playlist id.
 
@@ -258,17 +261,17 @@ class Api(UsesLog):
 
     def get_all_songs(self):
         """Returns a list of `song dictionaries`__.
-        
+
         __ `GM Metadata Format`_
         """
 
         library = []
 
         lib_chunk = self._wc_call("loadalltracks")
-    
+
         while 'continuationToken' in lib_chunk:
             library += lib_chunk['playlist'] #misleading name; this is the entire chunk
-            
+
             lib_chunk = self._wc_call("loadalltracks", lib_chunk['continuationToken'])
 
         library += lib_chunk['playlist']
@@ -320,9 +323,9 @@ class Api(UsesLog):
             for p_dict in playlists.itervalues():
                 for name, id_list in p_dict.iteritems():
                     if len(id_list) == 1: p_dict[name]=id_list[0]
-        
+
         return playlists
-        
+
     def _playlist_list_to_dict(self, pl_list):
         d = {}
 
@@ -331,14 +334,14 @@ class Api(UsesLog):
             d[name].append(pid)
 
         return d
-        
+
     def _get_auto_playlists(self):
         """For auto playlists, returns a dictionary which maps autoplaylist name to id."""
-        
+
         #Auto playlist ids are hardcoded in the wc javascript.
         #If Google releases Music internationally, this will probably be broken.
         #TODO: how to test for this? if loaded, will the calls just fail?
-        return {"Thumbs up": "auto-playlist-thumbs-up", 
+        return {"Thumbs up": "auto-playlist-thumbs-up",
                 "Last added": "auto-playlist-recent",
                 "Free and purchased": "auto-playlist-promo"}
 
@@ -356,20 +359,20 @@ class Api(UsesLog):
         return (info["url"], info["downloadCounts"][song_id])
 
     def get_stream_url(self, song_id):
-        """Returns a url that points to a streamable version of this song. 
+        """Returns a url that points to a streamable version of this song.
 
         :param song_id: a single song id.
 
         *This is only intended for streaming*. The streamed audio does not contain metadata. Use :func:`get_song_download_info` to download complete files with metadata.
 
-        Reading the file does not require authentication.        
+        Reading the file does not require authentication.
         """
 
         #This call is strange. The body is empty, and the songid is passed in the querystring.
         res = self._wc_call("play", query_args={'songid': song_id})
-        
+
         return res['url']
-        
+
     def copy_playlist(self, orig_id, copy_name):
         """Copies the contents of a playlist to a new playlist. Returns the id of the new playlist.
 
@@ -378,9 +381,9 @@ class Api(UsesLog):
 
         Useful for making backups of playlists before modifications.
         """
-        
+
         orig_tracks = self.get_playlist_songs(orig_id)
-        
+
         new_id = self.create_playlist(copy_name)
         self.add_songs_to_playlist(new_id, [t["id"] for t in orig_tracks])
 
@@ -388,7 +391,7 @@ class Api(UsesLog):
 
     def change_playlist(self, playlist_id, desired_playlist, safe=True):
         """Changes the order and contents of an existing playlist. Returns the id of the playlist when finished - which may not be the argument, in the case of a failure and recovery.
-        
+
         :param playlist_id: the id of the playlist being modified.
         :param desired_playlist: the desired contents and order as a list of song dictionaries, like is returned from :func:`get_playlist_songs`.
         :param safe: if True, ensure playlists will not be lost if a problem occurs. This may slow down updates.
@@ -399,7 +402,7 @@ class Api(UsesLog):
 
         There will always be a warning logged if a problem occurs, even if `safe` is False.
         """
-        
+
         #We'll be modifying the entries in the playlist, and need to copy it.
         #Copying ensures two things:
         # 1. the user won't see our changes
@@ -412,14 +415,14 @@ class Api(UsesLog):
             #The backup is stored on the server as a new playlist with "_gmusicapi_backup" appended to the backed up name.
             #We can't just store the backup here, since when rolling back we'd be relying on this function - and it just failed.
             names_to_ids = self.get_all_playlist_ids(always_id_lists=True)['user']
-            playlist_name = (ni_pair[0] 
+            playlist_name = (ni_pair[0]
                              for ni_pair in names_to_ids.iteritems()
                              if playlist_id in ni_pair[1]).next()
 
             backup_id = self.copy_playlist(playlist_id, playlist_name + "_gmusicapi_backup")
 
         #Ensure CallFailures do not get suppressed in our subcalls.
-        #Did not unsuppress the above copy_playlist call, since we should fail 
+        #Did not unsuppress the above copy_playlist call, since we should fail
         # out if we can't ensure the backup was made.
         with self._unsuppress_failures():
             try:
@@ -449,7 +452,7 @@ class Api(UsesLog):
                             #Found a matching sid.
                             match = d_t
                             sid = match["id"]
-                            eid = match.get("playlistEntryId") 
+                            eid = match.get("playlistEntryId")
                             pair = (sid, eid)
 
                             if pair in to_keep:
@@ -492,7 +495,7 @@ class Api(UsesLog):
                         playlist_id = backup_id
             finally:
                 return playlist_id
-    
+
     @utils.accept_singleton(basestring, 2)
     @utils.empty_arg_shortcircuit(position=2)
     def add_songs_to_playlist(self, playlist_id, song_ids):
@@ -503,7 +506,7 @@ class Api(UsesLog):
         """
 
         return [(s['songId'], s['playlistEntryId'])
-                for s in 
+                for s in
                 self._wc_call("addtoplaylist", playlist_id, song_ids)['songIds']]
 
     @utils.accept_singleton(basestring, 2)
@@ -526,12 +529,12 @@ class Api(UsesLog):
 
         if matching_eids:
             #Call returns "sid_eid" strings.
-            sid_eids = self._remove_entries_from_playlist(playlist_id, 
+            sid_eids = self._remove_entries_from_playlist(playlist_id,
                                                           matching_eids)
             return [s.split("_") for s in sid_eids]
         else:
             return []
-    
+
     @utils.accept_singleton(basestring, 2)
     @utils.empty_arg_shortcircuit(position=2)
     def _remove_entries_from_playlist(self, playlist_id, entry_ids_to_remove):
@@ -544,8 +547,8 @@ class Api(UsesLog):
         #GM requires the song ids in the call as well; find them.
         playlist_tracks = self.get_playlist_songs(playlist_id)
         remove_eid_set = set(entry_ids_to_remove)
-        
-        e_s_id_pairs = [(t["id"], t["playlistEntryId"]) 
+
+        e_s_id_pairs = [(t["id"], t["playlistEntryId"])
                         for t in playlist_tracks
                         if t["playlistEntryId"] in remove_eid_set]
 
@@ -557,8 +560,8 @@ class Api(UsesLog):
         sids, eids = zip(*e_s_id_pairs)
 
         return self._wc_call("deletesong", sids, eids, playlist_id)['deleteIds']
-    
-        
+
+
     def search(self, query):
         """Searches for songs and albums.
 
@@ -569,9 +572,9 @@ class Api(UsesLog):
 
             {'artistName': 'The Cat Empire',
              'imageUrl': '<url>',
-             'albumArtist': 'The Cat Empire', 
+             'albumArtist': 'The Cat Empire',
              'albumName': 'Cities: The Cat Empire Project'}
-        
+
         Hits on song or artist name return the matching `song dictionary`__.
 
         The responses are returned in a dictionary, arranged by hit type::
@@ -604,9 +607,9 @@ class Api(UsesLog):
 
         #Always log the request.
         self.log.debug("wc_call %s %s", service_name, args)
-        
+
         body, res_schema = protocol.build_transaction(*args)
-        
+
 
         #Encode the body. It might be None (empty).
         if body is not None: #body can be {}, which is different from None. {} is falsey.
@@ -617,7 +620,7 @@ class Api(UsesLog):
             extra_query_args = kw['query_args']
 
         res = self.session.open_web_url(protocol.build_url, extra_query_args, body)
-        
+
         read = res.read()
         res = json.loads(read)
 
@@ -631,7 +634,7 @@ class Api(UsesLog):
         if not success:
             self.log.error("call to %s failed", service_name)
             self.log.debug("full response: %s", res)
-            
+
             if not self.suppress_failure:
                 calling_func_name = inspect.stack()[1][3]
                 raise CallFailure(calling_func_name, res) #normally caused by bad arguments to the server
@@ -646,7 +649,7 @@ class Api(UsesLog):
                 self.log.debug("full response: %s", res)
                 self.log.debug("failed schema: %s", res_schema)
                 self.log.warning("error was: %s", details)
-                    
+
         return res
 
 
@@ -667,7 +670,7 @@ class Api(UsesLog):
     #     #protocol incorrect here...
     #     return (quota.maximumTracks, quota.totalTracks, quota.availableTracks)
 
-    
+
 
     @utils.accept_singleton(basestring)
     @utils.empty_arg_shortcircuit(ret={})
@@ -695,7 +698,7 @@ class Api(UsesLog):
                 results[orig_fnames[fname]] = sid
 
         return results
-        
+
 
     @contextlib.contextmanager
     def _temp_mp3_conversion(self, filenames):
@@ -703,7 +706,7 @@ class Api(UsesLog):
         Returns (list of file objects, {'temp filename':'orig fname'})
 
         Only supported non-mp3s are converted and given a temp file."""
-        
+
         temp_file_handles = []
         all_file_handles = []
 
@@ -727,15 +730,15 @@ class Api(UsesLog):
 
                         #pipe:1 -> send output to stdout
                         p = subprocess.Popen(["ffmpeg", "-i", orig_fn, "-f", "mp3", "-ab", "320k", "pipe:1"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        
+
                         audio_data, err_output = p.communicate()
-                        
+
                         #Check for success and write out our temp file.
                         if p.returncode is not 0:
                             raise OSError
                         else:
                             t_handle.write(audio_data)
-                            
+
 
                     except OSError:
                         if err_output is not None:
@@ -748,7 +751,7 @@ class Api(UsesLog):
                     finally:
                         #Close the file so mutagen can write out its tags.
                         t_handle.close()
-                        
+
 
                     #Copy tags over. It's easier to do this here than mess with
                     # passing overriding metadata into _upload() later on
@@ -796,11 +799,11 @@ class Api(UsesLog):
             attempts = 0
 
             while not success and attempts < 3:
-                
+
                 #Pull this out with the below call when it makes sense to.
                 res = json.loads(
                     self.session.post_jumper(
-                        "/uploadsj/rupio", 
+                        "/uploadsj/rupio",
                         post_data).read())
 
                 if 'sessionStatus' in res:
@@ -834,11 +837,11 @@ class Api(UsesLog):
                     else:
                         #Unknown error code.
                         self.log.warning("upload service reported an unknown error code. Please report this to the project.\n  entire response: %s", str(res))
-                    
+
                 else:
                     self.log.warning("upload service sent back a response that could not be interpreted. Please report this to the project.\n  entire response: %s", str(res))
-                    
-                                        
+
+
                 time.sleep(3)
                 self.log.info("trying again for a session.")
                 attempts += 1
@@ -850,14 +853,14 @@ class Api(UsesLog):
 
                 with open(filename, mode="rb") as audio_data:
                     res = json.loads(
-                        self.session.post_jumper( 
-                            up['putInfo']['url'], 
-                            audio_data, 
+                        self.session.post_jumper(
+                            up['putInfo']['url'],
+                            audio_data,
                             {'Content-Type': up['content_type']}).read())
-                
+
                 self.log.debug("post_jumper res: %s", res)
 
-            
+
                 if res['sessionStatus']['state'] == 'FINALIZED':
                     fn_sid_map[filename] = server_id
                     self.log.info("successfully uploaded sid %s", server_id)
