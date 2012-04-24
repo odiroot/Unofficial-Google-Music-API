@@ -32,13 +32,11 @@ This api is not supported nor endorsed by Google, and could break at any time.
 
 **Respect Google in your use of the API.** Use common sense: protocol compliance, reasonable load, etc.
 """
+from __future__ import with_statement
 
 import json
-import re
-import string
 import time
 import exceptions
-import collections
 import copy
 import contextlib
 import tempfile
@@ -643,7 +641,7 @@ class Api(UsesLog):
         if success and res_schema:
             try:
                 validictory.validate(res, res_schema)
-            except ValueError as details:
+            except ValueError, details:
                 self.log.warning("Received an unexpected response from call %s.", service_name)
                 self.log.debug("full response: %s", res)
                 self.log.debug("failed schema: %s", res_schema)
@@ -739,7 +737,7 @@ class Api(UsesLog):
                             t_handle.write(audio_data)
                             
 
-                    except OSError as e:
+                    except OSError:
                         if err_output is not None:
                             self.log.error("FFmpeg could not convert the file to mp3. output was: %s", err_output)
                         else:

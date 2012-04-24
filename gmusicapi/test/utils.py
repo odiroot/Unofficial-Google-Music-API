@@ -55,7 +55,7 @@ def init():
     """
 
     api = UnitTestedApi()
-    
+
     logged_in = False
     attempts = 0
 
@@ -101,10 +101,10 @@ def modify_md(md_name, val):
 
 def md_entry_same(entry_name, s1, s2):
     """Returns (s1 and s2 have the same value for entry_name?, message)."""
-    
+
     s1_val = s1[entry_name]
     s2_val = s2[entry_name]
-    
+
     return (s1_val == s2_val, "(" + entry_name + ") " + repr(s1_val) + ", " + repr(s2_val))
 
 
@@ -133,7 +133,7 @@ class enforced(object):
     """A callable that enforces the return of a function with a predicate."""
     def __init__(self, pred):
         self.pred = pred
-    
+
     def __call__(self, f):
         def wrapped_f(*args, **kwargs):
             res = f(*args, **kwargs)
@@ -170,7 +170,7 @@ class UnitTestedApi(Api):
 
 
 
-                         
+
     def __getattribute__(self, name):
         orig = object.__getattribute__(self, name)
         #Enforce any name in the lists above with the right pred.
@@ -178,7 +178,7 @@ class UnitTestedApi(Api):
             return enforced(fname_to_pred[name])(orig)
         else:
             return orig
-    
+
 
 class BaseTest(unittest.TestCase):
     """Abstract class providing some useful features for testing the api."""
@@ -188,10 +188,10 @@ class BaseTest(unittest.TestCase):
         """Init and log in to an api, then get the library and playlists."""
 
         cls.api = init()
-    
+
         if not cls.api.is_authenticated():
             raise session.NotLoggedIn
-        
+
         #These are assumed to succeed, but errors here will prevent further testing.
         cls.library = cls.api.get_all_songs()
 
@@ -220,7 +220,7 @@ class BaseTest(unittest.TestCase):
         """Yields the steps of a monolithic test in name-sorted order."""
 
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
-        
+
         #Sort functions based on name.
         for name, func in sorted(methods, key=lambda m: m[0]):
             if name.startswith(prefix):
@@ -236,7 +236,7 @@ class BaseTest(unittest.TestCase):
             #Only catch exceptions raised from _our_ test code.
             #Other kinds of exceptions may be raised inside the code
             # being tested; those should be re-raised so we can trace them.
-            except CallFailure as f:
+            except CallFailure, f:
                 raise self.fail("test {} step {} call to {} failure: {}".format(prefix, step, f.name, f.res))
-            except AssertionError as e:
+            except AssertionError:
                 raise #it's actually easiest to just reraise this, so we can track down what went wrong

@@ -26,13 +26,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """The protocol layer is a one-to-one mapping of calls to Google Music."""
-
+from __future__ import with_statement
 
 import string
 import os
-import random
-from collections import namedtuple
-import exceptions
 from uuid import getnode as getmac
 from socket import gethostname
 import base64

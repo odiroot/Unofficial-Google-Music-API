@@ -40,12 +40,12 @@ log = LogController.get_logger("utils")
 
 def copy_md_tags(from_fname, to_fname):
     """Copy all metadata from *from_fname* to *to_fname* and write.
-    
+
     Return True on success, False if not all keys were copied/saved."""
-    
+
     from_tags = mutagen.File(from_fname, easy=True)
     to_tags = mutagen.File(to_fname, easy=True)
-    
+
     if from_tags is None or to_tags is None:
         log.debug("couldn't find an appropriate handler for tag files: '%s' '%s'", from_fname, to_fname)
         return False
@@ -63,16 +63,16 @@ def copy_md_tags(from_fname, to_fname):
                 safe = [str(e) for e in v]
             else:
                 safe = str(e)
-            
+
             to_tags[k] = safe
-        except mutagen.easyid3.EasyID3KeyError as e:
+        except mutagen.easyid3.EasyID3KeyError, e:
             #Raised because we're copying in an unsupported in easy-mode key.
-            log.debug("skipping non easy key", exc_info=True) 
+            log.debug("skipping non easy key", exc_info=True)
         except:
             #lots of things can go wrong, just skip the key
             log.warning("problem when copying keys from '%s' to '%s'", from_fname, to_fname, exc_info=True)
             success = False
-        
+
     try:
         to_tags.save()
     except:
@@ -80,14 +80,14 @@ def copy_md_tags(from_fname, to_fname):
         success = False
 
     return success
-    
+
 def to_camel_case(s):
     """Given a sring in underscore form, returns a copy of it in camel case.
     eg, camel_case('test_string') => 'TestString'. """
     return ''.join(map(lambda x: x.title(), s.split('_')))
 
 def empty_arg_shortcircuit(ret=[], position=1):
-    """Decorate a function to shortcircuit and return something immediately if 
+    """Decorate a function to shortcircuit and return something immediately if
     the length of a positional arg is 0.
 
     :param ret: what to return when shortcircuiting
@@ -115,7 +115,7 @@ def accept_singleton(expected_type, position=1):
 
     @decorator
     def wrapper(function, *args, **kw):
-        
+
         if isinstance(args[position], expected_type):
             #args are a tuple, can't assign into them
             args = list(args)
@@ -145,7 +145,7 @@ def NotImplementedField(self):
 
 def call_succeeded(response):
     """Returns True if the call succeeded, False otherwise."""
-    
+
     #Failed responses always have a success=False key.
     #Some successful responses do not have a success=True key, however.
 
