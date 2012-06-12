@@ -45,6 +45,8 @@ import contextlib
 import tempfile
 import subprocess
 import os
+import validictory
+
 #used for _wc_call to get its calling parent.
 #according to http://stackoverflow.com/questions/1095543/get-name-of-calling-functions-module-in-python,
 # this
@@ -92,7 +94,7 @@ class CallFailure(exceptions.Exception):
         self.res = res
 
     def __str__(self):
-        return "api call {} failed; server returned {}".format(self.name, self.res)
+        return "api call %s failed; server returned %s" % (self.name, self.res)
 
 class Api(UsesLog):
     def __init__(self, suppress_failure=False):
@@ -1024,7 +1026,7 @@ class PlaySession(object):
 
             extra_url_args = ""
             for name, val in extra_args.iteritems():
-                extra_url_args += "&{0}={1}".format(name, val)
+                extra_url_args += "&%s=%s" % (name, val)
 
             url += extra_url_args
 

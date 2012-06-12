@@ -33,9 +33,9 @@ def init():
     """Makes an instance of the api and attempts to login with it.
     Returns the authenticated api.
     """
-    
-    api = Api() 
-    
+
+    api = Api()
+
     logged_in = False
     attempts = 0
 
@@ -73,8 +73,7 @@ def main():
     #Show some info about a song. There is no guaranteed order;
     # this is essentially a random song.
     first_song = library[0]
-    print "The first song I see is '{}' by '{}'.".format(
-        first_song["name"],
+    print "The first song I see is '%s' by '%s'." % (first_song["name"],
         first_song["artist"])
 
 

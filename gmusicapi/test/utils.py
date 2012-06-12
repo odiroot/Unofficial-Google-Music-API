@@ -45,9 +45,9 @@ log = LogController.get_logger("utils")
 #A regex for the gm id format, eg:
 #c293dd5a-9aa9-33c4-8b09-0c865b56ce46
 hex_set = "[0-9a-f]"
-gm_id_regex = re.compile(("{h}{{8}}-" +
-                         ("{h}{{4}}-" * 3) +
-                         "{h}{{12}}").format(h=hex_set))
+gm_id_regex = re.compile(("%(h)s{8}-" +
+                         ("%(h)s{4}-" * 3) +
+                         "%(h)s{12}") % dict(h=hex_set))
 
 def init():
     """Makes an instance of the unit-tested api and attempts to login with it.
@@ -237,6 +237,7 @@ class BaseTest(unittest.TestCase):
             #Other kinds of exceptions may be raised inside the code
             # being tested; those should be re-raised so we can trace them.
             except CallFailure, f:
-                raise self.fail("test {} step {} call to {} failure: {}".format(prefix, step, f.name, f.res))
+                raise self.fail("test %s step %s call to %s failure: %s" % (
+                    prefix, step, f.name, f.res))
             except AssertionError:
                 raise #it's actually easiest to just reraise this, so we can track down what went wrong

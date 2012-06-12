@@ -36,9 +36,9 @@ def init():
 
 def play(url):
     if PLAYER == "phonon":
-        app = QApplication(sys.argv, 
+        app = QApplication(sys.argv,
             applicationName="Google Music playing test")
-        media = Phonon.createPlayer(Phonon.MusicCategory, 
+        media = Phonon.createPlayer(Phonon.MusicCategory,
             Phonon.MediaSource(url))
         media.play()
         # Trick to allow Ctrl+C to exit.
