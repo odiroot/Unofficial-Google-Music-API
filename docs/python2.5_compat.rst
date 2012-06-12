@@ -25,6 +25,18 @@ Proposed solution: replace with old style syntax::
     except HTTPError, e:
 
 
+New string interpolation with ``{}``
+------------------------------------
+
+Example::
+
+    qstring = '?u=0&xt={0}'.format(query_string['xt'])
+
+Proposed solution: replace with old compatible syntax::
+
+    qstring = '?u=0&xt=%s' % query_string['xt']
+
+
 Python 3 features
 -----------------
 
@@ -40,6 +52,10 @@ Proposed solution: replace with old, expression style::
 
 Missing and icompatible modules
 ===============================
+
+namedtuple
+----------
+Proposed alternative: replace with casual tuple, use http://code.activestate.com/recipes/500261/
 
 JSON
 ----
