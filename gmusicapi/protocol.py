@@ -45,9 +45,9 @@ from utils.apilogging import LogController #TODO this is a hack
 
 class WC_Call(object):
     """An abstract class to hold the protocol for a web client call."""
-    
+
     _base_url = 'https://play.google.com/music/'
-    
+
     #Added to the url after _base_url. Most calls are made to /music/services/<call name>
     #Expected to end with a forward slash.
     _suburl = 'services/'
@@ -58,14 +58,14 @@ class WC_Call(object):
 
     #Do we need to be logged in before making the call?
     requires_login = True
-    
+
     #Most calls will send u=0 and the xt cookie in the querystring.
     @classmethod
     def build_url(cls, query_string=None):
         """Return the url to make the call at."""
 
         #Most calls send u=0 and xt=<cookie value>
-        qstring = '?u=0&xt={0}'.format(query_string['xt'])
+        qstring = '?u=0&xt=%s' % query_string['xt']
 
         return cls._base_url + cls._suburl + cls.__name__ + qstring
 
@@ -111,12 +111,12 @@ class _Metadata_Expectation(object):
 
     #A list of allowed values, or None for no restriction.
     allowed_values = None
-    
+
     #Can the value change without us changing it?
     volatile = False
 
     #The name of the Metadata class our value depends on, or None.
-    depends_on = None 
+    depends_on = None
 
     #A function that takes the dependent key's value
     # and returns our own. Only implemented for dependent keys.
@@ -138,12 +138,12 @@ class _Metadata_Expectation(object):
             schema["required"] = False
 
         return schema
-    
+
 class UnknownExpectation(_Metadata_Expectation):
     """A flexible expectation intended to be given when we know nothing about a key."""
     val_type = "any"
     mutable = False
-    
+
 
 class Metadata_Expectations(object):
     """Holds expectations about metadata."""
@@ -182,7 +182,7 @@ class Metadata_Expectations(object):
         for name in dir(cls):
             member = cls.get_expectation(name, warn_on_unknown=False)
             if member is not UnknownExpectation: expts[member.name]=member
-        
+
         return expts
 
     #Mutable metadata:
@@ -263,12 +263,12 @@ class Metadata_Expectations(object):
         val_type = "boolean"
     class matchedId(_Metadata_Expectation):
         mutable = False
-        
-    
+
+
     #Dependent metadata:
     class title(_Metadata_Expectation):
         depends_on = "name"
-        
+
         @staticmethod
         def dependent_transformation(other_value):
             return other_value #nothing changes
@@ -292,7 +292,7 @@ class Metadata_Expectations(object):
 
         @staticmethod
         def dependent_transformation(other_value):
-            return string.lower(other_value)    
+            return string.lower(other_value)
 
     class artistNorm(_Metadata_Expectation):
         depends_on = "artist"
@@ -301,14 +301,14 @@ class Metadata_Expectations(object):
         def dependent_transformation(other_value):
             return string.lower(other_value)
 
-    
+
     #Metadata we have no control over:
     class lastPlayed(_Metadata_Expectation):
         mutable = False
         volatile = True
         val_type = "integer"
 
-    
+
 class WC_Protocol(object):
     """Holds the protocol for all suppported web client interactions."""
 
@@ -319,13 +319,13 @@ class WC_Protocol(object):
                    "properties":{},
 
                    #don't allow metadata not in expectations
-                   "additionalProperties":False} 
+                   "additionalProperties":False}
 
     for name, expt in Metadata_Expectations.get_all_expectations().items():
         song_schema["properties"][name] = expt.get_schema()
 
     song_array = {"type":"array",
-                  "items": song_schema}        
+                  "items": song_schema}
 
     pl_schema = {"type":"object",
                  "properties":{
@@ -348,11 +348,11 @@ class WC_Protocol(object):
         """Creates a new playlist."""
 
         @staticmethod
-        def build_transaction(title): 
+        def build_transaction(title):
             """
             :param title: the title of the playlist to create.
             """
-            
+
             req = {"title": title}
 
             #{"id":"<new playlist id>","title":"<name>","success":true}
@@ -377,8 +377,8 @@ class WC_Protocol(object):
             :param song_ids: a list of song ids
             """
 
-            req = {"playlistId": playlist_id, "songIds": song_ids} 
-                                      
+            req = {"playlistId": playlist_id, "songIds": song_ids}
+
             #{"playlistId":"<same as above>","songIds":[{"playlistEntryId":"<new id>","songId":"<same as above>"}]}
             res = {"type": "object",
                       "properties":{
@@ -396,8 +396,8 @@ class WC_Protocol(object):
                         },
                    "additionalProperties":False
                    }
-                   
-                    
+
+
             return (req, res)
 
 
@@ -410,7 +410,7 @@ class WC_Protocol(object):
             :param playlist_id: id of the playlist to rename.
             :param new_title: desired title.
             """
-        
+
             req = {"playlistId": playlist_id, "playlistName": new_name}
 
             #{}
@@ -422,9 +422,9 @@ class WC_Protocol(object):
 
     class changeplaylistorder(WC_Call):
         """Reorders songs currently in a playlist."""
-        
+
         @staticmethod
-        def build_transaction(playlist_id, song_ids_moving, entry_ids_moving, 
+        def build_transaction(playlist_id, song_ids_moving, entry_ids_moving,
                               after_entry_id="", before_entry_id=""):
             """
             :param playlist_id: id of the playlist getting reordered
@@ -451,9 +451,9 @@ class WC_Protocol(object):
                        },
                    "additionalProperties":False
                    }
- 
+
             return (req, res)
-    
+
     class deleteplaylist(WC_Call):
         """Deletes a playlist."""
 
@@ -462,7 +462,7 @@ class WC_Protocol(object):
             """
             :param playlist_id: id of the playlist to delete.
             """
-            
+
             req = {"id": playlist_id}
 
             #{"deleteId": "<id>"}
@@ -472,9 +472,9 @@ class WC_Protocol(object):
                        },
                    "additionalProperties":False
                    }
-                     
+
             return (req, res)
-        
+
 
     class deletesong(WC_Call):
         """Delete a song from the library or a playlist."""
@@ -555,21 +555,21 @@ class WC_Protocol(object):
                            },
                        "additionalProperties":False
                        }
-                        
+
             else:
                 req = {"id": playlist_id}
                 res = WC_Protocol.pl_schema
-                           
+
             return (req, res)
-        
-    
+
+
     class modifyentries(WC_Call):
         """Edit the metadata of songs."""
 
         @classmethod
         def build_transaction(cls, songs):
             """:param songs: a list of dictionary representations of songs."""
-        
+
             #Warn about metadata changes that may cause problems.
             #If you change the interface in api, you can warn about changing bad categories, too.
             #Something like safelychange(song, entries) where entries are only those you want to change.
@@ -578,8 +578,11 @@ class WC_Protocol(object):
                 for key in song:
                     allowed_values = Metadata_Expectations.get_expectation(key).allowed_values
                     if allowed_values and song[key] not in allowed_values:
-                        LogController.get_logger("modifyentries").warning("setting key {0} to unallowed value {1} for id {2}. Check metadata expectations in protocol.py".format(key, song[key], song["id"]))
-                        
+                        LogController.get_logger("modifyentries").warning(
+                            "setting key %s to unallowed value %s for id "
+                            "%s. Check metadata expectations in "
+                            "protocol.py" % (key, song[key], song["id"]))
+
 
             req = {"entries": songs}
 
@@ -642,12 +645,12 @@ class WC_Protocol(object):
                    }
             res = None
             return (req, res)
-        
+
 
     class search(WC_Call):
         """Search for songs, artists and albums.
         GM ignores punctuation."""
-    
+
         @staticmethod
         def build_transaction(query):
             req = {"q": query}
@@ -671,14 +674,14 @@ class WC_Protocol(object):
                                            "albumName":{"type":"string"},
                                            }
                                        }
-                                   }       
+                                   }
                                }
                            }
                        },
                    "additionalProperties":False
                    }
-                                  
-                    
+
+
             return (req, res)
 
 
@@ -711,21 +714,21 @@ class MM_Protocol(object):
         self.metadata_request_filled.address = self.mac
 
         self.metadata_response_filled = metadata_pb2.MetadataResponse()
-        
+
         #Service name mapped to url.
         self.pb_services = {
             "upload_auth" : 'upauth',
             "client_state": 'clientstate',
             "metadata": 'metadata?version=1'}
 
-    
+
     def make_pb(self, pb_name):
         """Makes a new instance of a protobuff protocol.
         Client identifying fields are pre-filled.
-        
+
         :pb_name: the name of the protocol
         """
-        
+
         #eg: for "upload_auth", pb gets metadata_pb2.UploadAuth()
         pb = getattr(metadata_pb2,
                      utils.to_camel_case(pb_name))()
@@ -765,10 +768,10 @@ class MM_Protocol(object):
             # so this shouldn't cause problems.
 
             #This will reupload files if their tags change.
-            
+
             with open(filename, mode="rb") as f:
                 file_contents = f.read()
-            
+
             h = hashlib.md5(file_contents).digest()
             h = base64.encodestring(h)[:-3]
             id = h
@@ -790,7 +793,7 @@ class MM_Protocol(object):
             if "artist" in audio: track.artist = audio["artist"][0]
             if "composer" in audio: track.composer = audio["composer"][0]
 
-            #albumartist is 'performer' according to this guy: 
+            #albumartist is 'performer' according to this guy:
             # https://github.com/plexinc-plugins/Scanners.bundle/commit/95cc0b9eeb7fa8fa77c36ffcf0ec51644a927700
 
             if "performer" in audio: track.albumArtist = audio["performer"][0]
@@ -799,7 +802,7 @@ class MM_Protocol(object):
             if "bpm" in audio: track.beatsPerMinute = int(audio["bpm"][0])
 
             #think these are assumptions:
-            if "tracknumber" in audio: 
+            if "tracknumber" in audio:
                 tracknumber = audio["tracknumber"][0].split("/")
                 track.track = int(tracknumber[0])
                 if len(tracknumber) == 2 and tracknumber[1]:
@@ -817,7 +820,7 @@ class MM_Protocol(object):
     def make_upload_session_requests(self, filemap, server_response):
         """Returns a list of (filename, serverid, json) to request upload sessions.
         If no sessions are created, returns an empty list.
-        
+
         :param filemap: maps ClientID to filename
         :param server_response: the MetadataResponse that preceded these requests
         """

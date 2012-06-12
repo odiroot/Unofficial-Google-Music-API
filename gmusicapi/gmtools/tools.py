@@ -30,6 +30,10 @@
 import operator
 import re
 import collections
+try:
+    from collections import namedtuple
+except ImportError:
+    from gmusicapi.utils.namedtuple import namedtuple
 
 
 def get_id_pairs(track_list):
@@ -284,7 +288,7 @@ class SongMatcher(object):
 
 
     #A named tuple to hold the frozen args when querying recursively.
-    QueryState = collections.namedtuple('QueryState', 'orig t_breaker mods auto')
+    QueryState = namedtuple('QueryState', 'orig t_breaker mods auto')
 
     def query_library(self, query, tie_breaker=no_tiebreak, modifiers=[], auto=False):
         """Queries the library for songs.
