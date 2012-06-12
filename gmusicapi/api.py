@@ -70,7 +70,6 @@ except ImportError:
 
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
-import validictory
 
 from protocol import WC_Protocol, MM_Protocol
 from utils import utils

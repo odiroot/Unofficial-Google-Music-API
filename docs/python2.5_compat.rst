@@ -51,6 +51,7 @@ Validictory
 -----------
 Uses incompatible syntax.
 Proposed solution: remove dependency, custom schema validation or none at all.
+Another viable solution: use older version (<0.8)
 
 
 
