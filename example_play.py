@@ -18,15 +18,17 @@ except ImportError:
         PLAYER = None
 
 
-def init():
+def init(email=None, password=None):
     api = Api()
 
     logged_in = False
     attempts = 0
 
     while not logged_in and attempts < 3:
-        email = raw_input("Email: ")
-        password = getpass()
+        if email is None:
+            email = raw_input("Email: ")
+        if password is None or attempts > 0:
+            password = getpass()
 
         logged_in = api.login(email, password)
         attempts += 1
@@ -57,7 +59,15 @@ def play(url):
 
 
 def main():
-    api, success = init()
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option("-e", "--email", dest="email",
+        help="Your GMail address.")
+    parser.add_option("-p", "--password", dest="password",
+        help="You GMail password or application specific password.")
+    (options, args) = parser.parse_args()
+
+    api, success = init(email=options.email, password=options.password)
     if success:
         print "Success: logged in."
     else:
