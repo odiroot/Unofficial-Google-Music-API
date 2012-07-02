@@ -134,7 +134,7 @@ class Api(UsesLog):
         return self.session.logged_in
 
 
-    def login(self, email, password):
+    def login(self, email, password, register_device=False):
         """Authenticates the api with the given credentials.
         Returns True on success, False on failure.
 
@@ -147,8 +147,9 @@ class Api(UsesLog):
         self.session.login(email, password)
 
         if self.is_authenticated():
-            #Need some extra init for upload authentication.
-            self._mm_pb_call("upload_auth") #what if this fails? can it?
+            # Needs to be run once for every new device used with GMusic.
+            if register_device:
+                self._mm_pb_call("upload_auth") #what if this fails? can it?
             self.log.info("logged in")
         else:
             self.log.info("failed to log wc in")
