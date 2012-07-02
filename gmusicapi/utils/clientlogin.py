@@ -24,7 +24,8 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import logging
+import os.path
 try:
     # These are for python3 support
     from urllib.request import urlopen, Request
@@ -37,6 +38,14 @@ except ImportError:
     from urllib2 import HTTPError
     from urllib import urlencode
     unistr = unicode
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
+
+log = logging.getLogger(__name__)
+
 
 class ClientLogin(object):
     """
@@ -49,6 +58,7 @@ class ClientLogin(object):
 
     # This is the URL used for ClientLogin authentication
     AUTH_URL = 'https://www.google.com/accounts/ClientLogin'
+    TOKENS_FILE = os.path.join(os.path.expanduser("~"), ".gmusicapi_tokens")
 
     def __init__(self, user, passwd, service, acct_type='GOOGLE', source=None):
         """
@@ -80,8 +90,44 @@ class ClientLogin(object):
         self.source = source
 
         self.auth_token = None
-        self.sid_token  = None
+        self.sid_token = None
         self.lsid_token = None
+        self._load_tokens()
+
+    def _load_tokens(self):
+        "Try to load previously saved tokens."
+        try:
+            f = open(self.TOKENS_FILE, "r")
+            tokens = pickle.load(f)
+
+            self.auth_token = tokens["auth"]
+            self.sid_token = tokens["sid"]
+            self.lsid_token = tokens["lsid"]
+
+            log.debug("Using existing tokens to initialize session")
+            f.close()
+        except (IOError, pickle.UnpicklingError, ValueError, IndexError), e:
+            log.debug("Loading tokens from file failed: %s", e)
+
+            self.auth_token = None
+            self.sid_token = None
+            self.lsid_token = None
+
+    def _store_tokens(self):
+        "Save existing tokens to a file."
+        try:
+            f = open(self.TOKENS_FILE, "w")
+
+            pickle.dump({
+                "auth": self.auth_token,
+                "sid": self.sid_token,
+                "lsid": self.lsid_token,
+            }, f)
+
+            f.close()
+            log.debug("Saving tokens to a file succeeded")
+        except (IOError, pickle.PicklingError), e:
+            log.debug("Saving tokens to a file failed: %s", e)
 
     def _process_response(self, resp):
         ret = {}
@@ -139,6 +185,7 @@ class ClientLogin(object):
             self.sid_token = ret['SID']
         if 'LSID' in ret:
             self.lsid_token = ret['LSID']
+        self._store_tokens()
 
     def get_auth_token(self, request=False):
         """
