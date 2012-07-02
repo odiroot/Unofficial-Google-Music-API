@@ -60,7 +60,8 @@ class ClientLogin(object):
     AUTH_URL = 'https://www.google.com/accounts/ClientLogin'
     TOKENS_FILE = os.path.join(os.path.expanduser("~"), ".gmusicapi_tokens")
 
-    def __init__(self, user, passwd, service, acct_type='GOOGLE', source=None):
+    def __init__(self, user=None, passwd=None, service="sj",
+            acct_type='GOOGLE', source=None):
         """
         Create a new instance of the management class with the provided
         credentials.
@@ -82,17 +83,21 @@ class ClientLogin(object):
         :param source: (optional)
         Short string identifying your application, for logging purposes.
         """
-
         self.user = user
         self.passwd = passwd
         self.service = service
         self.acct_type = acct_type
         self.source = source
 
-        self.auth_token = None
-        self.sid_token = None
-        self.lsid_token = None
-        self._load_tokens()
+        # Before doing an authentication try to load saved session tokens
+        if not self._load_tokens():
+            self.auth_token = None
+            self.sid_token = None
+            self.lsid_token = None
+            # We lack tokens and login data:
+            if not self.user or not self.passwd or not self.service:
+                raise ValueError("You have to provide your username and"
+                    " password to initialize session")
 
     def _load_tokens(self):
         "Try to load previously saved tokens."
@@ -106,12 +111,10 @@ class ClientLogin(object):
 
             log.debug("Using existing tokens to initialize session")
             f.close()
+            return True
         except (IOError, pickle.UnpicklingError, ValueError, IndexError), e:
             log.debug("Loading tokens from file failed: %s", e)
-
-            self.auth_token = None
-            self.sid_token = None
-            self.lsid_token = None
+            return False
 
     def _store_tokens(self):
         "Save existing tokens to a file."

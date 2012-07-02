@@ -964,8 +964,7 @@ class PlaySession(object):
 
         return None
 
-
-    def login(self, email, password):
+    def login(self, email=None, password=None):
         """
         Attempts to create an authenticated session using the email and
         password provided.
