@@ -58,7 +58,6 @@ class ClientLogin(object):
 
     # This is the URL used for ClientLogin authentication
     AUTH_URL = 'https://www.google.com/accounts/ClientLogin'
-    TOKENS_FILE = os.path.join(os.path.expanduser("~"), ".gmusicapi_tokens")
 
     def __init__(self, user=None, passwd=None, tokens=None, service="sj",
             acct_type='GOOGLE', source=None):
@@ -155,14 +154,10 @@ class ClientLogin(object):
         }
         err, resp = self._make_request(self.AUTH_URL, data, headers)
         if err is not None:
-            #raise Exception("HTTP Error %d" % err)
-            return
+            raise RuntimeError("User/passsword verification failed: %s, %s" %
+                (err, resp))
 
         ret = self._process_response(resp)
-        if 'Error' in ret:
-            #raise Exception(ret['Error'])
-            return
-
         if 'Auth' in ret:
             self.auth_token = ret['Auth']
         if 'SID' in ret:
@@ -179,7 +174,6 @@ class ClientLogin(object):
 
         :param request: Force the request of a new authentication token.
         """
-
         if self.auth_token is None or request is True:
             self._request_tokens()
         return self.auth_token
