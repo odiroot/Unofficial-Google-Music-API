@@ -60,7 +60,7 @@ class ClientLogin(object):
     AUTH_URL = 'https://www.google.com/accounts/ClientLogin'
     TOKENS_FILE = os.path.join(os.path.expanduser("~"), ".gmusicapi_tokens")
 
-    def __init__(self, user=None, passwd=None, service="sj",
+    def __init__(self, user=None, passwd=None, tokens=None, service="sj",
             acct_type='GOOGLE', source=None):
         """
         Create a new instance of the management class with the provided
@@ -83,54 +83,35 @@ class ClientLogin(object):
         :param source: (optional)
         Short string identifying your application, for logging purposes.
         """
-        self.user = user
-        self.passwd = passwd
+        if not tokens:  # Fetch tokens using user and password.
+            if not user or not passwd:
+                raise ValueError("You have to provide either tokens dict or"
+                    " user/password pair")
+            self.user = user
+            self.passwd = passwd
+
+            self.auth_token = None
+            self.sid_token = None
+            self.lsid_token = None
+        else:  # Use previously acquired tokens.
+            for name in ["auth", "sid", "lsid"]:
+                if name not in tokens:
+                    raise ValueError("Tokens dict has to provide '%s' token" %
+                        name)
+                else:
+                    setattr(self, "%s_token" % name, tokens[name])
+
         self.service = service
         self.acct_type = acct_type
         self.source = source
 
-        # Before doing an authentication try to load saved session tokens
-        if not self._load_tokens():
-            self.auth_token = None
-            self.sid_token = None
-            self.lsid_token = None
-            # We lack tokens and login data:
-            if not self.user or not self.passwd or not self.service:
-                raise ValueError("You have to provide your username and"
-                    " password to initialize session")
-
-    def _load_tokens(self):
-        "Try to load previously saved tokens."
-        try:
-            f = open(self.TOKENS_FILE, "r")
-            tokens = pickle.load(f)
-
-            self.auth_token = tokens["auth"]
-            self.sid_token = tokens["sid"]
-            self.lsid_token = tokens["lsid"]
-
-            log.debug("Using existing tokens to initialize session")
-            f.close()
-            return True
-        except (IOError, pickle.UnpicklingError, ValueError, IndexError), e:
-            log.debug("Loading tokens from file failed: %s", e)
-            return False
-
-    def _store_tokens(self):
-        "Save existing tokens to a file."
-        try:
-            f = open(self.TOKENS_FILE, "w")
-
-            pickle.dump({
-                "auth": self.auth_token,
-                "sid": self.sid_token,
-                "lsid": self.lsid_token,
-            }, f)
-
-            f.close()
-            log.debug("Saving tokens to a file succeeded")
-        except (IOError, pickle.PicklingError), e:
-            log.debug("Saving tokens to a file failed: %s", e)
+    def get_tokens(self):
+        "Returns a dict with obtained tokens."
+        return {
+            "auth": self.auth_token,
+            "sid": self.sid_token,
+            "lsid": self.lsid_token,
+        }
 
     def _process_response(self, resp):
         ret = {}
@@ -188,7 +169,6 @@ class ClientLogin(object):
             self.sid_token = ret['SID']
         if 'LSID' in ret:
             self.lsid_token = ret['LSID']
-        self._store_tokens()
 
     def get_auth_token(self, request=False):
         """
@@ -238,7 +218,7 @@ class ClientLogin(object):
         Returns True if there are valid tokens, False otherwise.
         """
         return  (
-                        self.auth_token is not None
-                    and self.sid_token  is not None
-                    and self.lsid_token is not None
-                )
+            self.auth_token is not None
+            and self.sid_token  is not None
+            and self.lsid_token is not None
+        )

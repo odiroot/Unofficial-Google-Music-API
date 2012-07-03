@@ -133,23 +133,27 @@ class Api(UsesLog):
         """Returns whether the api is logged in."""
         return self.session.logged_in
 
-
-    def login(self, email, password, register_device=False):
+    def login(self, email=None, password=None, tokens=None,
+            register_device=False):
         """Authenticates the api with the given credentials.
         Returns True on success, False on failure.
 
         :param email: eg "`test@gmail.com`"
-        :param password: plaintext password. It will not be stored and is sent over ssl.
+        :param password: plaintext password. It will not be stored and is sent
+            over ssl.
+        :param tokens: a dict with valid session tokens (auth, sid, lsid)
+        :param register_device: whether to register current device in GMusic
+            service
 
-        Users of two-factor authentication will need to set an application-specific password
-        to log in."""
+        Users of two-factor authentication will need to set an
+        application-specific password to log in."""
 
-        self.session.login(email, password)
+        self.session.login(email=email, password=password, tokens=tokens)
 
         if self.is_authenticated():
             # Needs to be run once for every new device used with GMusic.
             if register_device:
-                self._mm_pb_call("upload_auth") #what if this fails? can it?
+                self._mm_pb_call("upload_auth")  # What if this fails? can it?
             self.log.info("logged in")
         else:
             self.log.info("failed to log wc in")
@@ -952,7 +956,6 @@ class PlaySession(object):
                     self.get_cookie('xt') is not None
                 )
 
-
     def get_cookie(self, name):
         """
         Finds the value of a cookie by name, returning None on failure.
@@ -965,7 +968,7 @@ class PlaySession(object):
 
         return None
 
-    def login(self, email=None, password=None):
+    def login(self, email=None, password=None, tokens=None):
         """
         Attempts to create an authenticated session using the email and
         password provided.
@@ -974,11 +977,13 @@ class PlaySession(object):
 
         :param email: The email address of the account to log in.
         :param password: The password of the account to log in.
+        :param tokens: a dict with valid session tokens (auth, sid, lsid)
         """
         if self.logged_in:
             raise AlreadyLoggedIn
 
-        self.client = ClientLogin(email, password, 'sj')
+        self.client = ClientLogin(user=email, passwd=password, tokens=tokens,
+            service='sj')
         tokenauth = TokenAuth('sj', self.PLAY_URL, 'jumper')
 
         if self.client.get_auth_token() is None:
@@ -991,13 +996,11 @@ class PlaySession(object):
 
         return self.logged_in
 
-
     def logout(self):
         """
         Resets the session to an unauthenticated default state.
         """
         self.__init__()
-
 
     def open_web_url(self, url_builder, extra_args=None, data=None, ua=None):
         """
