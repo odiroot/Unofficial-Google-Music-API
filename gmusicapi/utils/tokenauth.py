@@ -40,6 +40,7 @@ except ImportError:
     from cookielib import LWPCookieJar
     unistr = unicode
 
+
 class TokenAuth(object):
     """
     A Google ClientLogin to web session converter.
@@ -57,7 +58,6 @@ class TokenAuth(object):
         self.service = service
         self.redirect = redirect
         self.source = source
-
 
     def _make_request(self, url, data=None, headers={}):
         if not data:
@@ -80,9 +80,8 @@ class TokenAuth(object):
         resp_obj.close()
         return None, unistr(resp, encoding='utf8')
 
-
     def authenticate(self, clientlogin):
-        body =  {
+        body = {
             'SID':      clientlogin.get_sid_token(),
             'LSID':     clientlogin.get_lsid_token(),
             'service':  'gaia'
@@ -97,9 +96,9 @@ class TokenAuth(object):
         # Get the auth token
         err, resp = self._make_request(self.ISSUE_URL, body, headers)
         if err is not None:
-            raise "HTTP Error %d" % err
+            raise RuntimeError("HTTP Error: %d" % err)
 
-        token = resp.rstrip() #resp[:-1]
+        token = resp.rstrip()  # resp[:-1]
 
         data = {
             'auth':     token,
@@ -115,7 +114,7 @@ class TokenAuth(object):
         # Get the session cookies
         err, resp = self._make_request(url, None, headers)
         if err is not None:
-            raise "HTTP Error %d" % err
+            raise RuntimeError("HTTP Error: %d" % err)
 
     def get_cookies(self):
         return self.cookiejar
