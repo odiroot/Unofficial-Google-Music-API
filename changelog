@@ -1,3 +1,15 @@
+2013.01.05:
+	compatibility update for playlist mutation
+	various metadata compatibility updates
+
+2012.11.09:
+	bugfix: support for uploading uppercase filenames (Tom Graham)
+	bugfix: fix typo in multidownload validation, and add test
+
+2012.08.31:
+	metadata compatibility updates (storeId, lastPlayed)
+	fix uploading of unicode filenames without tags
+
 2012.05.04:
 	update allowed rating values to 1-5 (David Dooling)
 	update metajamId to matchedId (David Dooling)

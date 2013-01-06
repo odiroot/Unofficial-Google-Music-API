@@ -35,12 +35,13 @@ import string
 
 from ..utils.apilogging import UsesLog
 from ..test import utils as test_utils
-from ..protocol import Metadata_Expectations
+from ..protocol import MetadataExpectations
 from ..protocol import UnknownExpectation
 
 #Expected to be in this directory.
-no_tags_filename = "no_tags.mp3"
-has_tags_filename = "test.mp3"
+has_tags_filename = 'upper.MP3'
+#Also tests unicode compatibility.
+no_tags_filename = '한글.mp3'
 
 #Lots of things to be pulled out of the other api call test class here.
 
@@ -57,12 +58,12 @@ class TestRegressions(test_utils.BaseTest, UsesLog):
         cls.no_tags_filename = path[:string.rfind(path, os.sep)] + os.sep + no_tags_filename
         cls.has_tags_filename = path[:string.rfind(path, os.sep)] + os.sep + has_tags_filename
 
-
     #---
     #   Monolithic tests: 
     #   (messy, but less likely to destructively modify the library)
     #   Modified from http://stackoverflow.com/questions/5387299/python-unittest-testcase-execution-order
     #---
+
 
     def notags_1_upload_notags(self):
         """Upload the file without tags."""
@@ -92,11 +93,11 @@ class TestRegressions(test_utils.BaseTest, UsesLog):
         self.run_steps("notags")
 
     def test_invalid_md_key(self):
-        expt = Metadata_Expectations.get_expectation("foo", warn_on_unknown=False)
+        expt = MetadataExpectations.get_expectation("foo", warn_on_unknown=False)
         self.assertTrue(expt is UnknownExpectation)
 
         #Don't want any unknowns when getting all.
-        for expt in Metadata_Expectations.get_all_expectations():
+        for expt in MetadataExpectations.get_all_expectations():
             self.assertTrue(expt is not UnknownExpectation)
 
 

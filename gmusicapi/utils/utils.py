@@ -34,9 +34,20 @@ from htmlentitydefs import name2codepoint
 
 import mutagen
 from decorator import decorator
+import chardet
 
 from apilogging import LogController
 log = LogController.get_logger("utils")
+
+def guess_str_encoding(s):
+    """Return a tuple (guessed encoding, confidence)."""
+
+    res = chardet.detect(s)
+    return (res['encoding'], res['confidence'])
+    
+def guess_file_encoding(filename):
+    with open(filename) as f: 
+        return guess_str_encoding(f.read())
 
 def copy_md_tags(from_fname, to_fname):
     """Copy all metadata from *from_fname* to *to_fname* and write.
@@ -86,18 +97,29 @@ def to_camel_case(s):
     eg, camel_case('test_string') => 'TestString'. """
     return ''.join(map(lambda x: x.title(), s.split('_')))
 
-def empty_arg_shortcircuit(ret=[], position=1):
+def empty_arg_shortcircuit(return_code='[]', position=1):
     """Decorate a function to shortcircuit and return something immediately if
     the length of a positional arg is 0.
 
-    :param ret: what to return when shortcircuiting
-    :param position: (optional) the position of the expected list - defaults to 1.
+    :param return_code: (optional) code to exec as the return value - default is a list.
+    :param position: (optional) the position of the expected list - default is 1.
     """
+
+    #The normal pattern when making a collection an optional arg is to use
+    # a sentinel (like None). Otherwise, you run the risk of the collection
+    # being mutated - there's only one, not a new one on each call.
+    #Here we've got multiple things we'd like to 
+    # return, so we can't do that. Rather than make some kind of enum for
+    # 'accepted return values' I'm just allowing freedom to return anything.
+    #Less safe? Yes. More convenient? Definitely.
 
     @decorator
     def wrapper(function, *args, **kw):
         if len(args[position]) == 0:
-            return ret
+            #avoid polluting our namespace
+            ns = {}
+            exec 'retval = ' + return_code in ns
+            return ns['retval']
         else:
             return function(*args, **kw)
 

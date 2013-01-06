@@ -79,11 +79,13 @@ These dictionaries have up to 30 keys. Here is an example::
      'artistNorm': 'the cat empire',
      'subjectToCuration': False,
      'matchedId': '',
-     (optional entry; exists if there is album art)
-     'albumArtUrl': '//lh6.googleusercontent.com/<long identifier>'
+
+     #optional entries:
+     'albumArtUrl': '//lh6.googleusercontent.com/<long identifier>',
+     'storeID': '<27 char base64 string>'
      }
 
 
 In addition, songs retrieved in the context of a playlist will contain a `playlistEntryId` which is unique to the relevant playlist.
 
-See ``Metadata_Expectations`` in ``protocol.py`` for complete information.
+See ``MetadataExpectations`` in ``protocol.py`` for complete information.
