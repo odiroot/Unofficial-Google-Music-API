@@ -24,8 +24,9 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """Utility functions used across api code."""
+from __future__ import with_statement
+
 
 import string
 import re
@@ -44,9 +45,9 @@ def guess_str_encoding(s):
 
     res = chardet.detect(s)
     return (res['encoding'], res['confidence'])
-    
+
 def guess_file_encoding(filename):
-    with open(filename) as f: 
+    with open(filename) as f:
         return guess_str_encoding(f.read())
 
 def copy_md_tags(from_fname, to_fname):
@@ -108,7 +109,7 @@ def empty_arg_shortcircuit(return_code='[]', position=1):
     #The normal pattern when making a collection an optional arg is to use
     # a sentinel (like None). Otherwise, you run the risk of the collection
     # being mutated - there's only one, not a new one on each call.
-    #Here we've got multiple things we'd like to 
+    #Here we've got multiple things we'd like to
     # return, so we can't do that. Rather than make some kind of enum for
     # 'accepted return values' I'm just allowing freedom to return anything.
     #Less safe? Yes. More convenient? Definitely.
